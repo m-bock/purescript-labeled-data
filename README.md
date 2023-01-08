@@ -1,5 +1,9 @@
 # purescript-labeled-data
 
+Conversions of arbitrary data types to and from Records or Variants
+
+
+## Example Draft
 
 ```hs
 data Foo
