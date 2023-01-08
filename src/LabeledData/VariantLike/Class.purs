@@ -2,12 +2,12 @@ module LabeledData.VariantLike.Class where
 
 import Prelude
 
-import LabeledData.VariantLike.Generic (class GenericVariantLike, genericFromVariant, genericToVariant)
 import Data.Either (Either)
 import Data.Maybe (Maybe)
 import Data.Tuple (Tuple)
 import Data.Variant (Variant)
 import Data.Variant as V
+import LabeledData.VariantLike.Generic (class GenericVariantLike, genericFromVariant, genericToVariant)
 import Type.Proxy (Proxy(..))
 
 class VariantLike a r | a -> r where
@@ -40,4 +40,3 @@ instance (GenericVariantLike (Either a b) r) => VariantLike (Either a b) r where
 instance (GenericVariantLike (Maybe a) r) => VariantLike (Maybe a) r where
   toVariant = genericToVariant
   fromVariant = genericFromVariant
-
