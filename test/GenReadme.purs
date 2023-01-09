@@ -129,7 +129,7 @@ type FooV = Variant
 -- <tr><td></td><td>Existing Syntax</td><td>Proposed Syntax</td></tr>
 -- <tr></tr>
 -- <tr>
--- <td>Type Definition</td>
+-- <td valign="top">>Type Definition</td>
 -- <td>
 --
 -- ```hs
