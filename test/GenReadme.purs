@@ -1,4 +1,4 @@
--- # purescript-labled-data
+-- # purescript-labeled-data
 --
 -- Conversions of arbitrary data types to and from Records or Variants
 -- 
