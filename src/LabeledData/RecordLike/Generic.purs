@@ -1,11 +1,13 @@
 module LabeledData.RecordLike.Generic
   ( class GenericRecordLike
+  , class MkIndex
+  , class RepRecordLike
   , genericFromRecord
   , genericToRecord
-  , class RepRecordLike
-  , repToRecord
   , repFromRecord
-  ) where
+  , repToRecord
+  )
+  where
 
 import Prelude
 
@@ -14,6 +16,7 @@ import Data.Symbol (class IsSymbol)
 import Prim.Int as Int
 import Prim.Row (class Union)
 import Prim.Row as Row
+import Prim.Symbol as Sym
 import Record as Rec
 import Type.Proxy (Proxy(..))
 import Unsafe.Coerce (unsafeCoerce)
@@ -24,9 +27,9 @@ class GenericRecordLike a r where
   genericToRecord :: a -> Record r
   genericFromRecord :: Record r -> a
 
-instance (Generic a rep, RepRecordLike 0 rep r) => GenericRecordLike a r where
-  genericToRecord = repToRecord (Proxy :: _ 0) <<< from
-  genericFromRecord = to <<< repFromRecord (Proxy :: _ 0)
+instance (Generic a rep, RepRecordLike 1 rep r) => GenericRecordLike a r where
+  genericToRecord = repToRecord (Proxy :: _ 1) <<< from
+  genericFromRecord = to <<< repFromRecord (Proxy :: _ 1)
 
 ---
 
@@ -53,7 +56,6 @@ instance
   , Int.Add ix 1 ix'
   , Union r1 r2 r
   , Union r2 r1 r
-  , Int.ToString ix ixs
   ) =>
   RepRecordLike ix (Product a b) r
   where
@@ -69,7 +71,7 @@ instance
 
 instance
   ( Row.Cons ixs a () r
-  , Int.ToString ix ixs
+  , MkIndex ix ixs
   , IsSymbol ixs
   ) =>
   RepRecordLike ix (Argument a) r
@@ -79,6 +81,16 @@ instance
 
   repFromRecord _ r =
     Argument $ Rec.get (Proxy :: _ ixs) r
+
+--- MkIndex
+
+class MkIndex (ix :: Int) (sym :: Symbol) | ix -> sym
+
+instance
+  ( Sym.Cons "_" ixs sym
+  , Int.ToString ix ixs
+  ) =>
+  MkIndex ix sym
 
 --- Internal Util
 

@@ -235,8 +235,8 @@ baz :: Baz
 baz = Baz 3 ""
 
 bazV :: 
-  { "0" :: Int
-  , "1" :: String
+  { _1 :: Int
+  , _2 :: String
   }
 bazV = genericToRecord baz
 ```

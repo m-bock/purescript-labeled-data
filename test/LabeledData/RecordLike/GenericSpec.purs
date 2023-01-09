@@ -27,11 +27,11 @@ spec =
         it "Single constructor ADT with multiple args: returns a record with keys of the positional fields" do
           genericToRecord (Foo 1 "" true)
             `shouldEqual`
-              { "0": 1, "1": "", "2": true }
+              { _1: 1, _2: "", _3: true }
         it "Single constructor ADT with one arg: returns a record with one key" do
           genericToRecord (Bar 1)
             `shouldEqual`
-              { "0": 1 }
+              { _1: 1 }
         it "Single constructor ADT with zero args: returns an empty record" do
           genericToRecord Baz
             `shouldEqual`
