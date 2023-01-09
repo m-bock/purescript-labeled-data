@@ -127,6 +127,7 @@ type FooV = Variant
 -- language like Records are.
 -- <table>
 -- <tr><td></td><td>Existing Syntax</td><td>Proposed Syntax</td></tr>
+-- <tr></tr>
 -- <tr>
 -- <td>Type Definition</td>
 -- <td>
@@ -150,6 +151,7 @@ type FooV = Variant
 -- ```
 -- </td>
 -- </tr>
+-- <tr></tr>
 -- <tr>
 -- <td>Constructing</td>
 -- <td>
@@ -167,6 +169,7 @@ type FooV = Variant
 -- ```
 -- </td>
 -- </tr>
+-- <tr></tr>
 -- <tr>
 -- <td>Pattern matching</td>
 -- <td>

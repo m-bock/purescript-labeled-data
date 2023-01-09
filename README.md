@@ -134,6 +134,7 @@ Variants and a proposal how it might look like if they were builtin to the
 language like Records are.
 <table>
 <tr><td></td><td>Existing Syntax</td><td>Proposed Syntax</td></tr>
+<tr></tr>
 <tr>
 <td>Type Definition</td>
 <td>
@@ -157,6 +158,7 @@ type MyVar =
 ```
 </td>
 </tr>
+<tr></tr>
 <tr>
 <td>Constructing</td>
 <td>
@@ -174,6 +176,7 @@ myVar1 = |a 34
 ```
 </td>
 </tr>
+<tr></tr>
 <tr>
 <td>Pattern matching</td>
 <td>
