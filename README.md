@@ -133,10 +133,10 @@ The following table contains a comparison of the existing way to deal with
 Variants and a proposal how it might look like if they were builtin to the
 language like Records are.
 <table>
-<tr><td></td><td>Existing Syntax</td><td>Proposed Syntax</td></tr>
+<tr><td></td><td>Existing Way</td><td>Proposed Syntax</td></tr>
 <tr></tr>
 <tr>
-<td valign="top">>Type Definition</td>
+<td valign="top">Type Definition</td>
 <td>
 
 ```hs
@@ -160,7 +160,7 @@ type MyVar =
 </tr>
 <tr></tr>
 <tr>
-<td>Constructing</td>
+<td valign="top">Constructing</td>
 <td>
 
 ```hs
@@ -178,7 +178,7 @@ myVar1 = |a 34
 </tr>
 <tr></tr>
 <tr>
-<td>Pattern matching</td>
+<td valign="top">Pattern matching</td>
 <td>
 
 ```hs
