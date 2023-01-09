@@ -7,8 +7,10 @@ Conversions of arbitrary data types to and from Records or Variants
 - [Imports](#imports)
 - [ADTs: Sums and Products](#adts-sums-and-products)
 - [Records and Variants. A better alternative?](#records-and-variants-a-better-alternative)
-  - [Builtin Variants](#builtin-variants)
+  - [How could Builtin Variants look like?](#how-could-builtin-variants-look-like)
 - [Using this library](#using-this-library)
+  - [Variants](#variants)
+  - [Records](#records)
 <!-- AUTO-GENERATED-CONTENT:END -->
 
 ## Imports
@@ -20,6 +22,7 @@ module Test.GenReadme where
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
 import Data.Variant (Variant)
+import LabeledData.RecordLike.Generic (genericToRecord)
 import LabeledData.VariantLike.Generic (genericToVariant)
 ```
 
@@ -34,11 +37,11 @@ main properties of such a type.
 ```hs
 data Foo
   -- Constructor    Arg 1                  Arg 2                  Arg 3
-  = MakeA Int String (Maybe Int)
-  | MakeB Boolean
+  = MakeA           Int                    String                 (Maybe Int)
+  | MakeB           Boolean
   | MakeC
-  | MakeD { x :: Int, y :: Int }
-  | MakeE Char { x :: Int, y :: Int }
+  | MakeD           { x :: Int, y :: Int }
+  | MakeE           Char                   { x :: Int, y :: Int }
 ```
 - On the vertical axis alternatives to
   construct a value of this type are listed. They're distinguished by the name
@@ -68,10 +71,10 @@ And they can be destructed by their constructors as well:
 f :: Foo -> String
 f foo = case foo of
   MakeA _ str _ -> str
-  MakeB _ -> "B"
-  MakeC -> "C"
-  MakeD _ -> "D"
-  MakeE _ _ -> "E"
+  MakeB _       -> "B"
+  MakeC         -> "C"
+  MakeD _       -> "D"
+  MakeE _ _     -> "E"
 ```
 ## Records and Variants. A better alternative?
 
@@ -105,17 +108,17 @@ Now we're able to redefine the above ADT as a Variant type:
 type Vec = { x :: Int, y :: Int }
 
 type FooV = Variant
-  ( makeA :: Record (_1 :: Int, _2 :: String, _3 :: Maybe Int)
-  , makeB :: Record (_1 :: Boolean)
-  , makeC :: Record ()
-  , makeD :: Record (_1 :: Vec)
-  , makeE :: Record (_1 :: Char, _2 :: Vec)
+  ( makeA :: Record ( _1 :: Int     , _2 :: String , _3 :: Maybe Int )
+  , makeB :: Record ( _1 :: Boolean                                  )
+  , makeC :: Record (                                                )
+  , makeD :: Record ( _1 :: Vec                                      )
+  , makeE :: Record ( _1 :: Char    , _2 :: Vec                      )
   )
 ```
 The fields for each case are defined as records. To highlight the analogy the
 more verbose `Record` syntax is used.
 Variants are structurally equivalent to Records sharing the same type level
-advantages of Rows. The difference is just that the fields are interpreted as
+advantages of Rows. The difference is just that the row fields are interpreted as
 cases.
 
 So if Variants and Records are more powerful, why not using them as a
@@ -123,11 +126,12 @@ replacement of ADTs? Theoretically it would be possible to avoid ADTs
 completely. With Variants wrapped in a newtype even recursive data structures
 like `List` are possible. The main problem why `Variants` are not as
 convenient is that they are not builtin into the language. Maybe not yet.
-This makes constructing ang pattern matching look very noisy.
-```hs
+This makes constructing and pattern matching look very noisy.
 
-```
-### Builtin Variants
+### How could Builtin Variants look like?
+The following table contains a comparison of the existing way to deal with
+Variants and a proposal how it might look like if they were builtin to the
+language like Records are.
 <table>
 <tr><td></td><td>Existing Syntax</td><td>Proposed Syntax</td></tr>
 <tr>
@@ -194,9 +198,6 @@ toInt = case_ of
 </tr>
 <table>
 
-Another advantage of ADTs might be that positional fields are sometimes a bit
-cleaner in cases where the meaning is obvious,
-
 ## Using this library
 
 In any way, in the current state of the language for me ADTs are still the
@@ -204,10 +205,38 @@ most concise way to describe data. So for good reasons you don't want to
 define your type as a Variant, however there may be places in your program
 where it would be quite convenient to convert your type to a Variant.
 
+### Variants
+
 This library provides a way to generically convert ADTs into Variants:
 ```hs
-derive instance Generic Foo _
+data Bar 
+  = Bar1 Int    String
+  | Bar2 String
 
-foo1V :: FooV
-foo1V = genericToVariant foo1
+derive instance Generic Bar _
+
+bar :: Bar
+bar = Bar1 3 ""
+
+barV :: Variant
+  ( bar1 :: { _1 :: Int    , _2 :: String }
+  , bar2 :: { _1 :: String                }
+  )
+barV = genericToVariant bar
+```
+### Records
+Single case ADTs can be turned into Records:
+```hs
+data Baz = Baz Int String
+
+derive instance Generic Baz _
+
+baz :: Baz
+baz = Baz 3 ""
+
+bazV :: 
+  { "0" :: Int
+  , "1" :: String
+  }
+bazV = genericToRecord baz
 ```
