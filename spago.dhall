@@ -1,7 +1,6 @@
 { name = "labeled-data"
 , dependencies =
   [ "aff"
-  , "console"
   , "effect"
   , "either"
   , "maybe"

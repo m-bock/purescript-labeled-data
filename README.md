@@ -1,18 +1,26 @@
 # purescript-labled-data
-```hs
 
-```
-# Imports
+Conversions of arbitrary data types to and from Records or Variants
+
+## Table of Contents
+<!-- AUTO-GENERATED-CONTENT:START (TOC) -->
+- [Imports](#imports)
+- [ADTs: Sums and Products](#adts-sums-and-products)
+- [Records and Variants. A better alternative?](#records-and-variants-a-better-alternative)
+  - [Builtin Variants](#builtin-variants)
+- [Using this library](#using-this-library)
+<!-- AUTO-GENERATED-CONTENT:END -->
+
+## Imports
 For the code samples in this file you need the following imports:
 ```hs
 module Test.GenReadme where
 
-import Prelude
 
+import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
 import Data.Variant (Variant)
-import Data.Variant as V
-import Type.Proxy (Proxy(..))
+import LabeledData.VariantLike.Generic (genericToVariant)
 ```
 
 ## ADTs: Sums and Products
@@ -73,8 +81,10 @@ compose them from smaller units. Nor can you narrow down a type to another
 type with less constructor cases. The same is true for the fields in each
 case. For the latter PureScript provides already a powerful alternative with
 great builtin support: Records.
+
 The fields of the `MakeA` constructor could also be described as `{ foo ::
 Int, bar :: String, baz :: Maybe Int }`
+
 This is syntactic sugar for `Record (foo :: Int, bar :: String, baz :: Maybe
 Int)`. PureScript provides a special kind called "Row" which can be regarded
 as a labeled collection of types. The `Record` type constructor takes a `Row`
@@ -95,7 +105,7 @@ Now we're able to redefine the above ADT as a Variant type:
 type Vec = { x :: Int, y :: Int }
 
 type FooV = Variant
-  ( makeA :: Record (_1 :: Int, _2 :: String, _3 :: Boolean)
+  ( makeA :: Record (_1 :: Int, _2 :: String, _3 :: Maybe Int)
   , makeB :: Record (_1 :: Boolean)
   , makeC :: Record ()
   , makeD :: Record (_1 :: Vec)
@@ -117,68 +127,87 @@ This makes constructing ang pattern matching look very noisy.
 ```hs
 
 ```
+### Builtin Variants
 <table>
-<tr><td></td><td>Existing Syntax<td></td><td>Proposed Syntax</td></tr>
+<tr><td></td><td>Existing Syntax</td><td>Proposed Syntax</td></tr>
 <tr>
 <td>Type Definition</td>
 <td>
 
-```text
+```hs
 type MyVar = Variant
   ( a :: Int
   , b :: String
   , c :: Boolean
   )
 ```
-<td>
+</td>
 <td>
 
-```text
+```hs
 type MyVar = 
   { a :: Int
   | b :: String
   | c :: Boolean
   }
 ```
-<td>
+</td>
 </tr>
 <tr>
 <td>Constructing</td>
 <td>
 
-```text
+```hs
 myVar1 :: MyVar
 myVar1 = V.inj (Proxy :: _ "a") 34
 ```
-<td>
+</td>
 <td>
 
-```text
+```hs
 myVar1 :: MyVar
-myVar1 = |a| 34
+myVar1 = |a 34
 ```
-<td>
+</td>
 </tr>
 <tr>
 <td>Pattern matching</td>
 <td>
 
-```text
+```hs
 toInt :: MyVar -> Int
 toInt = V.case_ # V.onMatch
   { a: \_ -> 0
   , b: \_ -> 1
   }
 ```
-<td>
+</td>
 <td>
 
-```text
+```hs
 toInt :: MyVar -> Int
 toInt = case_ of
   a _ -> 0
   b _ -> 1
 ```
-<td>
+</td>
 </tr>
 <table>
+
+Another advantage of ADTs might be that positional fields are sometimes a bit
+cleaner in cases where the meaning is obvious,
+
+## Using this library
+
+In any way, in the current state of the language for me ADTs are still the
+most concise way to describe data. So for good reasons you don't want to
+define your type as a Variant, however there may be places in your program
+where it would be quite convenient to convert your type to a Variant.
+
+This library provides a way to generically convert ADTs into Variants:
+```hs
+derive instance Generic Foo _
+
+foo1V :: FooV
+foo1V = genericToVariant foo1
+```

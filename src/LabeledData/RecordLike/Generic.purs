@@ -1,4 +1,11 @@
-module LabeledData.RecordLike.Generic where
+module LabeledData.RecordLike.Generic
+  ( class GenericRecordLike
+  , genericFromRecord
+  , genericToRecord
+  , class RepRecordLike
+  , repToRecord
+  , repFromRecord
+  ) where
 
 import Prelude
 
