@@ -3,6 +3,7 @@
   [ "aff"
   , "effect"
   , "either"
+  , "heterogeneous"
   , "maybe"
   , "prelude"
   , "record"
