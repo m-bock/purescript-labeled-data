@@ -1,16 +1,18 @@
 module LabeledData.VariantLike.Generic
-  ( class ArgsRecord
+  ( argsToRecord
+  , class ArgsRecord
   , class GenericVariantLike
+  , class LowerFirst
+  , class MkIndex
   , class RepVariantLike
+  , class ToLower
   , genericFromVariant
+  , genericFromVariant'
   , genericToVariant
+  , genericToVariant'
+  , recordToArgs
   , repFromVariant
   , repToVariant
-  , argsToRecord
-  , recordToArgs
-  , class LowerFirst
-  , class ToLower
-  , class MkIndex
   ) where
 
 import Prelude
@@ -27,7 +29,7 @@ import Record as Rec
 import Type.Proxy (Proxy(..))
 import Unsafe.Coerce (unsafeCoerce)
 
----
+--- GenericVariantLike
 
 class GenericVariantLike a r | a -> r where
   genericToVariant :: a -> Variant r
@@ -40,6 +42,8 @@ instance
   GenericVariantLike a r where
   genericToVariant = repToVariant <<< from
   genericFromVariant = to <<< repFromVariant
+
+--- RepVariantLike
 
 class RepVariantLike rep r | rep -> r where
   repToVariant :: rep -> Variant r
@@ -79,6 +83,8 @@ instance
   repFromVariant = matchOrContinue (Proxy :: _ sym')
     (Inl <<< Constructor <<< recordToArgs (Proxy :: _ 1))
     (Inr <<< repFromVariant)
+
+--- ArgsRecord
 
 class ArgsRecord :: Int -> Type -> Row Type -> Constraint
 class ArgsRecord ix rep r | rep -> r where
@@ -135,7 +141,7 @@ instance
   ) =>
   LowerFirst sym1 sym2
 
--- ToLower
+--- ToLower
 
 class ToLower (sym1 :: Symbol) (sym2 :: Symbol) | sym1 -> sym2
 
@@ -165,6 +171,14 @@ instance ToLower "W" "w"
 instance ToLower "X" "x"
 instance ToLower "Y" "y"
 instance ToLower "Z" "z"
+
+--- Proxy API
+
+genericToVariant' :: forall a r. GenericVariantLike a r => Proxy a -> Proxy (Variant r)
+genericToVariant' _ = Proxy
+
+genericFromVariant' :: forall a r. GenericVariantLike a r => Proxy (Variant r) -> Proxy a
+genericFromVariant' _ = Proxy
 
 --- Internal Util
 

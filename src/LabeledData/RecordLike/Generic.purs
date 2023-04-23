@@ -3,11 +3,12 @@ module LabeledData.RecordLike.Generic
   , class MkIndex
   , class RepRecordLike
   , genericFromRecord
+  , genericFromRecord'
   , genericToRecord
+  , genericToRecord'
   , repFromRecord
   , repToRecord
-  )
-  where
+  ) where
 
 import Prelude
 
@@ -21,7 +22,7 @@ import Record as Rec
 import Type.Proxy (Proxy(..))
 import Unsafe.Coerce (unsafeCoerce)
 
----
+--- GenericRecordLike
 
 class GenericRecordLike a r where
   genericToRecord :: a -> Record r
@@ -31,7 +32,7 @@ instance (Generic a rep, RepRecordLike 1 rep r) => GenericRecordLike a r where
   genericToRecord = repToRecord (Proxy :: _ 1) <<< from
   genericFromRecord = to <<< repFromRecord (Proxy :: _ 1)
 
----
+--- RepRecordLike
 
 class RepRecordLike (ix :: Int) rep r | rep -> r where
   repToRecord :: Proxy ix -> rep -> Record r
@@ -91,6 +92,14 @@ instance
   , Int.ToString ix ixs
   ) =>
   MkIndex ix sym
+
+--- Proxy API
+
+genericToRecord' :: forall a r. GenericRecordLike a r => Proxy a -> Proxy (Record r)
+genericToRecord' _ = Proxy
+
+genericFromRecord' :: forall a r. GenericRecordLike a r => Proxy (Record r) -> Proxy a
+genericFromRecord' _ = Proxy
 
 --- Internal Util
 
