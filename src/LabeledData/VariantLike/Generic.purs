@@ -2,10 +2,8 @@ module LabeledData.VariantLike.Generic
   ( argsToRecord
   , class ArgsRecord
   , class GenericVariantLike
-  , class LowerFirst
   , class MkIndex
   , class RepVariantLike
-  , class ToLower
   , genericFromVariant
   , genericFromVariant'
   , genericToVariant
@@ -21,6 +19,7 @@ import Data.Generic.Rep (class Generic, Argument(..), Constructor(..), NoArgumen
 import Data.Symbol (class IsSymbol)
 import Data.Variant (Variant)
 import Data.Variant as V
+import LabeledData.VariantLike.Transform (class TransformVariantCase, transformFromVariant, transformToVariant)
 import Prim.Int as Int
 import Prim.Row (class Union)
 import Prim.Row as Row
@@ -31,58 +30,64 @@ import Unsafe.Coerce (unsafeCoerce)
 
 --- GenericVariantLike
 
-class GenericVariantLike a r | a -> r where
-  genericToVariant :: a -> Variant r
-  genericFromVariant :: Variant r -> a
+class GenericVariantLike tok a r | a -> r where
+  genericToVariant :: tok -> a -> Variant r
+  genericFromVariant :: tok -> Variant r -> a
 
 instance
   ( Generic a rep
-  , RepVariantLike rep r
+  , RepVariantLike tok rep r
   ) =>
-  GenericVariantLike a r where
-  genericToVariant = repToVariant <<< from
-  genericFromVariant = to <<< repFromVariant
+  GenericVariantLike tok a r where
+  genericToVariant tok = repToVariant tok <<< from
+  genericFromVariant tok = to <<< repFromVariant tok
 
 --- RepVariantLike
 
-class RepVariantLike rep r | rep -> r where
-  repToVariant :: rep -> Variant r
-  repFromVariant :: Variant r -> rep
+class RepVariantLike tok rep r | rep -> r where
+  repToVariant :: tok -> rep -> Variant r
+  repFromVariant :: tok -> Variant r -> rep
 
 instance
-  ( Row.Cons sym' (Record argsRec) () r
+  ( Row.Cons sym' args' () r
   , IsSymbol sym'
   , ArgsRecord 1 args argsRec
-  , LowerFirst sym sym'
+  , TransformVariantCase tok sym sym' (Record argsRec) args'
   ) =>
-  RepVariantLike (Constructor sym args) r
+  RepVariantLike tok (Constructor sym args) r
   where
-  repToVariant (Constructor args) =
+  repToVariant _ (Constructor args) =
     argsToRecord (Proxy :: _ 1) args
+      # transformToVariant (Proxy :: _ tok) (Proxy :: _ sym) (Proxy :: _ sym')
       # V.inj (Proxy :: _ sym')
 
-  repFromVariant =
+  repFromVariant _ =
     V.case_
-      # V.on (Proxy :: _ sym') (Constructor <<< recordToArgs (Proxy :: _ 1))
+      # V.on (Proxy :: _ sym')
+          ( Constructor
+              <<< recordToArgs (Proxy :: _ 1)
+              <<< transformFromVariant (Proxy :: _ tok) (Proxy :: _ sym') (Proxy :: _ sym)
+          )
 
 instance
-  ( RepVariantLike b r2
+  ( RepVariantLike tok b r2
   , Row.Union r2 tr r
-  , LowerFirst sym sym'
   , ArgsRecord 1 args argsRec
-  , Row.Cons sym' (Record argsRec) r2 r
+  , Row.Cons sym' args' r2 r
   , IsSymbol sym'
+  , TransformVariantCase tok sym sym' (Record argsRec) args'
   ) =>
-  RepVariantLike (Sum (Constructor sym args) b) r
+  RepVariantLike tok (Sum (Constructor sym args) b) r
   where
-  repToVariant (Inl (Constructor args)) = argsToRecord (Proxy :: _ 1) args
+  repToVariant tok (Inl (Constructor args)) = argsToRecord (Proxy :: _ 1) args
+    # transformToVariant (Proxy :: _ tok) (Proxy :: _ sym) (Proxy :: _ sym')
     # V.inj (Proxy :: _ sym')
 
-  repToVariant (Inr x) = V.expand $ repToVariant x
+  repToVariant tok (Inr x) = V.expand $ repToVariant tok x
 
-  repFromVariant = matchOrContinue (Proxy :: _ sym')
-    (Inl <<< Constructor <<< recordToArgs (Proxy :: _ 1))
-    (Inr <<< repFromVariant)
+  repFromVariant tok = matchOrContinue (Proxy :: _ sym')
+    (Inl <<< Constructor <<< recordToArgs (Proxy :: _ 1) <<< transformFromVariant (Proxy :: _ tok) (Proxy :: _ sym') (Proxy :: _ sym))
+    (Inr <<< repFromVariant tok)
 
 --- ArgsRecord
 
@@ -130,55 +135,13 @@ instance
   ) =>
   MkIndex ix sym
 
---- LowerFirst
-
-class LowerFirst (sym1 :: Symbol) (sym2 :: Symbol) | sym1 -> sym2
-
-instance
-  ( Sym.Cons head tail sym1
-  , ToLower head head'
-  , Sym.Cons head' tail sym2
-  ) =>
-  LowerFirst sym1 sym2
-
---- ToLower
-
-class ToLower (sym1 :: Symbol) (sym2 :: Symbol) | sym1 -> sym2
-
-instance ToLower "A" "a"
-instance ToLower "B" "b"
-instance ToLower "C" "c"
-instance ToLower "D" "d"
-instance ToLower "E" "e"
-instance ToLower "F" "f"
-instance ToLower "G" "g"
-instance ToLower "H" "h"
-instance ToLower "I" "i"
-instance ToLower "J" "j"
-instance ToLower "K" "k"
-instance ToLower "L" "l"
-instance ToLower "M" "m"
-instance ToLower "N" "n"
-instance ToLower "O" "o"
-instance ToLower "P" "p"
-instance ToLower "Q" "q"
-instance ToLower "R" "r"
-instance ToLower "S" "s"
-instance ToLower "T" "t"
-instance ToLower "U" "u"
-instance ToLower "V" "v"
-instance ToLower "W" "w"
-instance ToLower "X" "x"
-instance ToLower "Y" "y"
-instance ToLower "Z" "z"
-
 --- Proxy API
 
-genericToVariant' :: forall a r. GenericVariantLike a r => Proxy a -> Proxy (Variant r)
-genericToVariant' _ = Proxy
+genericToVariant' :: forall tok a r. GenericVariantLike tok a r => tok -> Proxy a -> Proxy (Variant r)
+genericToVariant' _ _ = Proxy
 
-genericFromVariant' :: forall a r. GenericVariantLike a r => Proxy (Variant r) -> Proxy a
-genericFromVariant' _ = Proxy
+genericFromVariant' :: forall tok a r. GenericVariantLike tok a r => tok -> Proxy (Variant r) -> Proxy a
+genericFromVariant' _ _ = Proxy
 
 --- Internal Util
 

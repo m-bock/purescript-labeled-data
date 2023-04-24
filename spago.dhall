@@ -9,6 +9,7 @@
   , "record"
   , "spec"
   , "tuples"
+  , "type-equality"
   , "unsafe-coerce"
   , "variant"
   ]

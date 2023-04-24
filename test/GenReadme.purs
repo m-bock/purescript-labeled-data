@@ -17,6 +17,7 @@ import Data.Maybe (Maybe(..))
 import Data.Variant (Variant)
 import LabeledData.RecordLike.Generic (genericToRecord)
 import LabeledData.VariantLike.Generic (genericToVariant)
+import LabeledData.VariantLike.Transform (LowerFirst(..), NoTransform(..))
 
 -- 
 -- ## ADTs: Sums and Products
@@ -218,7 +219,7 @@ barV :: Variant
   ( bar1 :: { _1 :: Int    , _2 :: String }
   , bar2 :: { _1 :: String                }
   )
-barV = genericToVariant bar
+barV = genericToVariant LowerFirst bar
 
 -- ### Records
 -- Single case ADTs can be turned into Records:
