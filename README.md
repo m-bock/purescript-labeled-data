@@ -93,7 +93,7 @@ This is syntactic sugar for `Record (foo :: Int, bar :: String, baz :: Maybe
 Int)`. PureScript provides a special kind called "Row" which can be regarded
 as a labeled collection of types. The `Record` type constructor takes a `Row`
 of types to create a record type. Values of this type must then provide all
-specified fields. Thus Records can be regarded as a sort of Product type with
+specified fields. Thus Records can be regarded as a product type with
 labeled fields. Records are very flexible because there is a lot of type
 level programming operating on `Rows` possible.
 
