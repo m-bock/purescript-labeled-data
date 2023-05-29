@@ -17,6 +17,10 @@ class VariantLike a r | a -> r where
   toVariant :: a -> Variant r
   fromVariant :: Variant r -> a
 
+--------------------------------------------------------------------------------
+--- Instances
+--------------------------------------------------------------------------------
+
 instance VariantLike (Variant r) r where
   toVariant = identity
   fromVariant = identity
@@ -25,7 +29,13 @@ instance (GenericVariantLike DefaultTransform (Tuple a b) r) => VariantLike (Tup
   toVariant = genericToVariant (Proxy :: _ DefaultTransform)
   fromVariant = genericFromVariant (Proxy :: _ DefaultTransform)
 
-instance VariantLike Boolean ("true" :: Unit, false :: Unit) where
+---
+
+type BooleanRow = (true :: Unit, false :: Unit)
+
+type BooleanV = Variant BooleanRow
+
+instance VariantLike Boolean BooleanRow where
   toVariant =
     if _ then
       V.inj (Proxy :: _ "true") unit
@@ -36,10 +46,33 @@ instance VariantLike Boolean ("true" :: Unit, false :: Unit) where
     # V.on (Proxy :: _ "true") (const true)
     # V.on (Proxy :: _ "false") (const false)
 
-instance (GenericVariantLike DefaultTransform (Either a b) r) => VariantLike (Either a b) r where
+---
+
+type EitherRow :: Type -> Type -> Row Type
+type EitherRow a b = (left :: a, right :: b)
+
+type EitherV a b = Variant (EitherRow a b)
+
+instance
+  ( GenericVariantLike DefaultTransform (Either a b) (EitherRow a b)
+  ) =>
+  VariantLike (Either a b) (EitherRow a b)
+  where
   toVariant = genericToVariant (Proxy :: _ DefaultTransform)
   fromVariant = genericFromVariant (Proxy :: _ DefaultTransform)
 
-instance (GenericVariantLike DefaultTransform (Maybe a) r) => VariantLike (Maybe a) r where
+---
+
+type MaybeRow :: Type -> Row Type
+type MaybeRow a = (nothing :: Unit, just :: a)
+
+type MaybeV a = Variant (MaybeRow a)
+
+instance
+  ( GenericVariantLike DefaultTransform (Maybe a) (MaybeRow a)
+  ) =>
+  VariantLike (Maybe a) (MaybeRow a)
+  where
   toVariant = genericToVariant (Proxy :: _ DefaultTransform)
   fromVariant = genericFromVariant (Proxy :: _ DefaultTransform)
+
