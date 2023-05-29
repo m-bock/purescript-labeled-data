@@ -30,7 +30,7 @@ data SingleField
 
 instance
   ( Row.Cons symFirst a () r
-  , TypeEquals symFirst "_1"
+  , TypeEquals symFirst "1"
   , IsSymbol symFirst
   ) =>
   TransformEntry SingleField sym sym (Record r) a where

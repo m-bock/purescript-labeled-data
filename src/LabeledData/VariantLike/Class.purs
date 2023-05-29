@@ -5,13 +5,17 @@ import Prelude
 import Data.Either (Either)
 import Data.Maybe (Maybe)
 import Data.Tuple (Tuple)
+import Data.Tuple.Nested (type (/\))
 import Data.Variant (Variant)
 import Data.Variant as V
+import LabeledData.TransformEntry.Transforms (ArgsToRecord, LowerFirst, NoTransform, SingleField)
 import LabeledData.VariantLike.Generic (class GenericVariantLike, genericFromVariant, genericToVariant)
-import LabeledData.TransformEntry.Transforms (LowerFirst)
 import Type.Proxy (Proxy(..))
 
-type DefaultTransform = LowerFirst
+type DefaultTransform =
+  LowerFirst
+    /\ SingleField
+    /\ (ArgsToRecord NoTransform)
 
 class VariantLike a r | a -> r where
   toVariant :: a -> Variant r
