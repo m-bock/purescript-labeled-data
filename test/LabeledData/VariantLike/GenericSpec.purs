@@ -4,9 +4,10 @@ import Prelude
 
 import Data.Generic.Rep (class Generic)
 import Data.Show.Generic (genericShow)
+import Data.Tuple.Nested (type (/\))
 import Data.Variant as V
+import LabeledData.TransformEntry.Transforms (ArgsToRecord, LowerFirst, Prefix)
 import LabeledData.VariantLike.Generic (genericFromVariant, genericToVariant)
-import LabeledData.VariantLike.Transform (LowerFirst(..))
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 import Type.Proxy (Proxy(..))
@@ -55,58 +56,63 @@ instance Show Fli where
 instance Show Baz where
   show = genericShow
 
+type Opts = LowerFirst /\ (ArgsToRecord (Prefix "_"))
+
+prxOpts = Proxy :: Proxy
+ Opts
+
 spec :: Spec Unit
 spec =
   describe "LabeledData.VariantLike.Generic" do
     describe "GenericVariantLike" do
       describe "genericToVariant" do
         it "Single constructor, no args" do
-          genericToVariant LowerFirst Foo
+          genericToVariant prxOpts Foo
             `shouldEqual`
               (V.inj (Proxy :: _ "foo") {})
 
         it "Single constructor, one arg" do
-          genericToVariant LowerFirst (Bar 2)
+          genericToVariant prxOpts (Bar 2)
             `shouldEqual`
-              (V.inj (Proxy :: _ "bar") { _1: 2 })
+              (V.inj (Proxy :: _ "bar") { "_1": 2 })
 
         it "Single constructor, multiple args" do
-          genericToVariant LowerFirst (Baz 3 "" true)
+          genericToVariant prxOpts (Baz 3 "" true)
             `shouldEqual`
               (V.inj (Proxy :: _ "baz") { _1: 3, _2: "", _3: true })
 
         it "Two constructors, each no args" do
-          genericToVariant LowerFirst Floo1
+          genericToVariant prxOpts Floo1
             `shouldEqual`
               (V.inj (Proxy :: _ "floo1") {})
 
         it "Two constructors, each one args" do
-          genericToVariant LowerFirst (Fla1 1)
+          genericToVariant prxOpts (Fla1 1)
             `shouldEqual`
               (V.inj (Proxy :: _ "fla1") { _1: 1 })
 
         it "Two constructors, each multiple args" do
-          genericToVariant LowerFirst (Fli1 1 "" true)
+          genericToVariant prxOpts (Fli1 1 "" true)
             `shouldEqual`
               (V.inj (Proxy :: _ "fli1") { _1: 1, _2: "", _3: true })
 
       describe "genericFromVariant" do
         it "Single constructor, no args" do
-          genericFromVariant LowerFirst (V.inj (Proxy :: _ "foo") {})
+          genericFromVariant prxOpts (V.inj (Proxy :: _ "foo") {})
             `shouldEqual`
               Foo
 
         it "Single constructor, one arg" do
-          genericFromVariant LowerFirst (V.inj (Proxy :: _ "bar") { _1: 2 })
+          genericFromVariant prxOpts (V.inj (Proxy :: _ "bar") { _1: 2 })
             `shouldEqual`
               (Bar 2)
 
         it "Single constructor, multiple args" do
-          genericFromVariant LowerFirst (V.inj (Proxy :: _ "baz") { _1: 3, _2: "", _3: true })
+          genericFromVariant prxOpts (V.inj (Proxy :: _ "baz") { _1: 3, _2: "", _3: true })
             `shouldEqual`
               (Baz 3 "" true)
 
         it "Two constructors, each multiple args" do
-          genericFromVariant LowerFirst (V.inj (Proxy :: _ "fli1") { _1: 1, _2: "", _3: true })
+          genericFromVariant prxOpts (V.inj (Proxy :: _ "fli1") { _1: 1, _2: "", _3: true })
             `shouldEqual`
               (Fli1 1 "" true)

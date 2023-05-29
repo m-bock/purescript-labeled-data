@@ -8,8 +8,10 @@ import Data.Tuple (Tuple)
 import Data.Variant (Variant)
 import Data.Variant as V
 import LabeledData.VariantLike.Generic (class GenericVariantLike, genericFromVariant, genericToVariant)
-import LabeledData.VariantLike.Transform (LowerFirst(..))
+import LabeledData.TransformEntry.Transforms (LowerFirst)
 import Type.Proxy (Proxy(..))
+
+type DefaultTransform = LowerFirst
 
 class VariantLike a r | a -> r where
   toVariant :: a -> Variant r
@@ -19,9 +21,9 @@ instance VariantLike (Variant r) r where
   toVariant = identity
   fromVariant = identity
 
-instance (GenericVariantLike LowerFirst (Tuple a b) r) => VariantLike (Tuple a b) r where
-  toVariant = genericToVariant LowerFirst
-  fromVariant = genericFromVariant LowerFirst
+instance (GenericVariantLike DefaultTransform (Tuple a b) r) => VariantLike (Tuple a b) r where
+  toVariant = genericToVariant (Proxy :: _ DefaultTransform)
+  fromVariant = genericFromVariant (Proxy :: _ DefaultTransform)
 
 instance VariantLike Boolean ("true" :: Unit, false :: Unit) where
   toVariant =
@@ -34,10 +36,10 @@ instance VariantLike Boolean ("true" :: Unit, false :: Unit) where
     # V.on (Proxy :: _ "true") (const true)
     # V.on (Proxy :: _ "false") (const false)
 
-instance (GenericVariantLike LowerFirst (Either a b) r) => VariantLike (Either a b) r where
-  toVariant = genericToVariant LowerFirst
-  fromVariant = genericFromVariant LowerFirst
+instance (GenericVariantLike DefaultTransform (Either a b) r) => VariantLike (Either a b) r where
+  toVariant = genericToVariant (Proxy :: _ DefaultTransform)
+  fromVariant = genericFromVariant (Proxy :: _ DefaultTransform)
 
-instance (GenericVariantLike LowerFirst (Maybe a) r) => VariantLike (Maybe a) r where
-  toVariant = genericToVariant LowerFirst
-  fromVariant = genericFromVariant LowerFirst
+instance (GenericVariantLike DefaultTransform (Maybe a) r) => VariantLike (Maybe a) r where
+  toVariant = genericToVariant (Proxy :: _ DefaultTransform)
+  fromVariant = genericFromVariant (Proxy :: _ DefaultTransform)
