@@ -1,38 +1,32 @@
 module LabeledData.VariantLike.Generic
-  ( argsToRecord
-  , class ArgsRecord
-  , class GenericVariantLike
-  , class MkIndex
+  ( class GenericVariantLike
   , class RepVariantLike
   , genericFromVariant
   , genericFromVariant'
   , genericToVariant
   , genericToVariant'
-  , recordToArgs
   , repFromVariant
   , repToVariant
   ) where
 
 import Prelude
 
-import Data.Generic.Rep (class Generic, Argument(..), Constructor(..), NoArguments(..), Product(..), Sum(..), from, to)
+import Data.Generic.Rep (class Generic, Constructor(..), Sum(..), from, to)
 import Data.Symbol (class IsSymbol)
 import Data.Variant (Variant)
 import Data.Variant as V
-import LabeledData.VariantLike.Transform (class TransformVariantCase, transformFromVariant, transformToVariant)
-import Prim.Int as Int
+import LabeledData.TransformEntry (class TransformEntry, untransformEntry, transformEntry)
 import Prim.Row (class Union)
 import Prim.Row as Row
-import Prim.Symbol as Sym
-import Record as Rec
 import Type.Proxy (Proxy(..))
 import Unsafe.Coerce (unsafeCoerce)
 
 --- GenericVariantLike
 
+class GenericVariantLike :: forall k. k -> Type -> Row Type -> Constraint
 class GenericVariantLike tok a r | a -> r where
-  genericToVariant :: tok -> a -> Variant r
-  genericFromVariant :: tok -> Variant r -> a
+  genericToVariant :: Proxy tok -> a -> Variant r
+  genericFromVariant :: Proxy tok -> Variant r -> a
 
 instance
   ( Generic a rep
@@ -44,96 +38,48 @@ instance
 
 --- RepVariantLike
 
+class RepVariantLike :: forall k. k -> Type -> Row Type -> Constraint
 class RepVariantLike tok rep r | rep -> r where
-  repToVariant :: tok -> rep -> Variant r
-  repFromVariant :: tok -> Variant r -> rep
+  repToVariant :: Proxy tok -> rep -> Variant r
+  repFromVariant :: Proxy tok -> Variant r -> rep
 
 instance
   ( Row.Cons sym' args' () r
   , IsSymbol sym'
-  , ArgsRecord 1 args argsRec
-  , TransformVariantCase tok sym sym' (Record argsRec) args'
+  , TransformEntry tok sym sym' args args'
   ) =>
   RepVariantLike tok (Constructor sym args) r
   where
   repToVariant _ (Constructor args) =
-    argsToRecord (Proxy :: _ 1) args
-      # transformToVariant (Proxy :: _ tok) (Proxy :: _ sym) (Proxy :: _ sym')
+    args
+      # transformEntry (Proxy :: _ tok) (Proxy :: _ sym) (Proxy :: _ sym')
       # V.inj (Proxy :: _ sym')
 
   repFromVariant _ =
     V.case_
       # V.on (Proxy :: _ sym')
           ( Constructor
-              <<< recordToArgs (Proxy :: _ 1)
-              <<< transformFromVariant (Proxy :: _ tok) (Proxy :: _ sym') (Proxy :: _ sym)
+              <<< untransformEntry (Proxy :: _ tok) (Proxy :: _ sym') (Proxy :: _ sym)
           )
 
 instance
   ( RepVariantLike tok b r2
   , Row.Union r2 tr r
-  , ArgsRecord 1 args argsRec
   , Row.Cons sym' args' r2 r
   , IsSymbol sym'
-  , TransformVariantCase tok sym sym' (Record argsRec) args'
+  , TransformEntry tok sym sym' args args'
   ) =>
   RepVariantLike tok (Sum (Constructor sym args) b) r
   where
-  repToVariant tok (Inl (Constructor args)) = argsToRecord (Proxy :: _ 1) args
-    # transformToVariant (Proxy :: _ tok) (Proxy :: _ sym) (Proxy :: _ sym')
+  repToVariant prxTok (Inl (Constructor args)) = args
+    # transformEntry prxTok (Proxy :: _ sym) (Proxy :: _ sym')
     # V.inj (Proxy :: _ sym')
 
   repToVariant tok (Inr x) = V.expand $ repToVariant tok x
 
   repFromVariant tok = matchOrContinue (Proxy :: _ sym')
-    (Inl <<< Constructor <<< recordToArgs (Proxy :: _ 1) <<< transformFromVariant (Proxy :: _ tok) (Proxy :: _ sym') (Proxy :: _ sym))
+    (Inl <<< Constructor <<< untransformEntry (Proxy :: _ tok) (Proxy :: _ sym') (Proxy :: _ sym))
     (Inr <<< repFromVariant tok)
-
---- ArgsRecord
-
-class ArgsRecord :: Int -> Type -> Row Type -> Constraint
-class ArgsRecord ix rep r | rep -> r where
-  argsToRecord :: Proxy ix -> rep -> Record r
-  recordToArgs :: Proxy ix -> Record r -> rep
-
-instance ArgsRecord ix NoArguments () where
-  argsToRecord _ _ = {}
-  recordToArgs _ _ = NoArguments
-
-instance
-  ( ArgsRecord ix repA ra
-  , ArgsRecord ix' repB rb
-  , Int.Add 1 ix ix'
-  , Row.Union ra rb r
-  , Row.Union rb ra r
-  ) =>
-  ArgsRecord ix (Product repA repB) r where
-  argsToRecord _ (Product a b) = Rec.union
-    (argsToRecord (Proxy :: _ ix) a)
-    (argsToRecord (Proxy :: _ ix') b)
-  recordToArgs _ r = Product
-    (recordToArgs (Proxy :: _ ix) $ pick r)
-    (recordToArgs (Proxy :: _ ix') $ pick r)
-
-instance
-  ( Int.ToString ix ixs
-  , MkIndex ix sym
-  , Row.Cons sym a () r
-  , IsSymbol sym
-  ) =>
-  ArgsRecord ix (Argument a) r where
-  argsToRecord _ (Argument x) = Rec.insert (Proxy :: _ sym) x {}
-  recordToArgs _ = Argument <<< Rec.get (Proxy :: _ sym)
-
---- MkIndex
-
-class MkIndex (ix :: Int) (sym :: Symbol) | ix -> sym
-
-instance
-  ( Sym.Cons "_" ixs sym
-  , Int.ToString ix ixs
-  ) =>
-  MkIndex ix sym
 
 --- Proxy API
 

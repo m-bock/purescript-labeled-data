@@ -21,10 +21,12 @@ module Test.GenReadme where
 
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
+import Data.Tuple.Nested (type (/\))
 import Data.Variant (Variant)
 import LabeledData.RecordLike.Generic (genericToRecord)
+import LabeledData.TransformEntry.Transforms (ArgsToRecord, LowerFirst, Prefix)
 import LabeledData.VariantLike.Generic (genericToVariant)
-import LabeledData.VariantLike.Transform (LowerFirst(..), NoTransform(..))
+import Type.Proxy (Proxy(..))
 ```
 
 ## ADTs: Sums and Products
@@ -226,7 +228,7 @@ barV :: Variant
   ( bar1 :: { _1 :: Int    , _2 :: String }
   , bar2 :: { _1 :: String                }
   )
-barV = genericToVariant LowerFirst bar
+barV = genericToVariant (Proxy :: _ (LowerFirst /\ ArgsToRecord (Prefix "_"))) bar
 ```
 ### Records
 Single case ADTs can be turned into Records:
@@ -242,5 +244,5 @@ bazV ::
   { _1 :: Int
   , _2 :: String
   }
-bazV = genericToRecord baz
+bazV = genericToRecord (Proxy :: _ (Prefix "_")) baz
 ```

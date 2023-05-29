@@ -4,3 +4,6 @@ gen-readme:
 
 format:
     purs-tidy format-in-place 'src/**/*.purs'
+
+test:
+    spago --config test.dhall test

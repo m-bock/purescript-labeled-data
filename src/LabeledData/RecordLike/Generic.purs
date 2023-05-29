@@ -1,6 +1,5 @@
 module LabeledData.RecordLike.Generic
   ( class GenericRecordLike
-  , class MkIndex
   , class RepRecordLike
   , genericFromRecord
   , genericFromRecord'
@@ -14,91 +13,89 @@ import Prelude
 
 import Data.Generic.Rep (class Generic, Argument(..), Constructor(..), NoArguments(..), Product(..), from, to)
 import Data.Symbol (class IsSymbol)
+import LabeledData.TransformEntry (class TransformEntry, transformEntry, untransformEntry)
 import Prim.Int as Int
 import Prim.Row (class Union)
 import Prim.Row as Row
-import Prim.Symbol as Sym
 import Record as Rec
 import Type.Proxy (Proxy(..))
 import Unsafe.Coerce (unsafeCoerce)
 
 --- GenericRecordLike
 
-class GenericRecordLike a r where
-  genericToRecord :: a -> Record r
-  genericFromRecord :: Record r -> a
+class GenericRecordLike :: forall k. k -> Type -> Row Type -> Constraint
+class GenericRecordLike tok a r where
+  genericToRecord :: Proxy tok -> a -> Record r
+  genericFromRecord :: Proxy tok -> Record r -> a
 
-instance (Generic a rep, RepRecordLike 1 rep r) => GenericRecordLike a r where
-  genericToRecord = repToRecord (Proxy :: _ 1) <<< from
-  genericFromRecord = to <<< repFromRecord (Proxy :: _ 1)
+instance (Generic a rep, RepRecordLike tok 1 rep r) => GenericRecordLike tok a r where
+  genericToRecord prxTok = repToRecord prxTok (Proxy :: _ 1) <<< from
+  genericFromRecord prxTok = to <<< repFromRecord prxTok (Proxy :: _ 1)
 
 --- RepRecordLike
 
-class RepRecordLike (ix :: Int) rep r | rep -> r where
-  repToRecord :: Proxy ix -> rep -> Record r
-  repFromRecord :: Proxy ix -> Record r -> rep
+class RepRecordLike :: forall k. k -> Int -> Type -> Row Type -> Constraint
+class RepRecordLike tok (ix :: Int) rep r | tok rep -> r where
+  repToRecord :: Proxy tok -> Proxy ix -> rep -> Record r
+  repFromRecord :: Proxy tok -> Proxy ix -> Record r -> rep
 
-instance (RepRecordLike ix args r) => RepRecordLike ix (Constructor s args) r
+instance (RepRecordLike tok ix args r) => RepRecordLike tok ix (Constructor s args) r
   where
-  repToRecord ix (Constructor args) =
-    repToRecord ix args
+  repToRecord prxTok ix (Constructor args) =
+    repToRecord prxTok ix args
 
-  repFromRecord ix r =
-    Constructor $ repFromRecord ix r
+  repFromRecord prxTok ix r =
+    Constructor $ repFromRecord prxTok ix r
 
-instance RepRecordLike ix NoArguments ()
+instance RepRecordLike tok ix NoArguments ()
   where
-  repToRecord _ _ = {}
-  repFromRecord _ _ = NoArguments
+  repToRecord _ _ _ = {}
+  repFromRecord _ _ _ = NoArguments
 
 instance
-  ( RepRecordLike ix a r1
-  , RepRecordLike ix' b r2
+  ( RepRecordLike tok ix a r1
+  , RepRecordLike tok ix' b r2
   , Int.Add ix 1 ix'
   , Union r1 r2 r
   , Union r2 r1 r
   ) =>
-  RepRecordLike ix (Product a b) r
+  RepRecordLike tok ix (Product a b) r
   where
-  repToRecord _ (Product a b) = Rec.union a' b'
+  repToRecord prxTok _ (Product a b) = Rec.union a' b'
     where
-    a' = repToRecord (Proxy :: _ ix) a
-    b' = repToRecord (Proxy :: _ ix') b
+    a' = repToRecord prxTok (Proxy :: _ ix) a
+    b' = repToRecord prxTok (Proxy :: _ ix') b
 
-  repFromRecord _ r = Product a b
+  repFromRecord prxTok _ r = Product a b
     where
-    a = pick r # repFromRecord (Proxy :: _ ix)
-    b = pick r # repFromRecord (Proxy :: _ ix')
+    a = pick r # repFromRecord prxTok (Proxy :: _ ix)
+    b = pick r # repFromRecord prxTok (Proxy :: _ ix')
 
 instance
-  ( Row.Cons ixs a () r
-  , MkIndex ix ixs
-  , IsSymbol ixs
+  ( Row.Cons sym' a' () r
+  , Int.ToString ix sym
+  , TransformEntry tok sym sym' a a'
+  , IsSymbol sym'
+  , IsSymbol sym
   ) =>
-  RepRecordLike ix (Argument a) r
+  RepRecordLike tok ix (Argument a) r
   where
-  repToRecord _ (Argument x) =
-    Rec.insert (Proxy :: _ ixs) x {}
+  repToRecord _ _ (Argument x) =
+    x
+      # transformEntry (Proxy :: _ tok) (Proxy :: _ sym) (Proxy :: _ sym')
+      # \x' -> Rec.insert (Proxy :: _ sym') x' {}
 
-  repFromRecord _ r =
-    Argument $ Rec.get (Proxy :: _ ixs) r
-
---- MkIndex
-
-class MkIndex (ix :: Int) (sym :: Symbol) | ix -> sym
-
-instance
-  ( Sym.Cons "_" ixs sym
-  , Int.ToString ix ixs
-  ) =>
-  MkIndex ix sym
+  repFromRecord _ _ r =
+    Argument
+      $ untransformEntry (Proxy :: _ tok) (Proxy :: _ sym') (Proxy :: _ sym)
+      $ Rec.get (Proxy :: _ sym') r
 
 --- Proxy API
 
-genericToRecord' :: forall a r. GenericRecordLike a r => Proxy a -> Proxy (Record r)
+genericToRecord' :: forall tok a r. GenericRecordLike tok a r => Proxy a -> Proxy (Record r)
 genericToRecord' _ = Proxy
 
-genericFromRecord' :: forall a r. GenericRecordLike a r => Proxy (Record r) -> Proxy a
+genericFromRecord' :: forall tok a r. GenericRecordLike tok a r => Proxy (Record r) -> Proxy a
 genericFromRecord' _ = Proxy
 
 --- Internal Util
