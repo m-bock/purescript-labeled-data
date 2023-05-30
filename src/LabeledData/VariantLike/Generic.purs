@@ -91,9 +91,6 @@ genericFromVariant' _ _ = Proxy
 
 --- Internal Util
 
-pick :: forall r2 rx r1. Union r2 rx r1 => Record r1 -> Record r2
-pick = unsafeCoerce
-
 matchOrContinue
   :: forall r r' sym a z
    . Row.Cons sym a r' r
