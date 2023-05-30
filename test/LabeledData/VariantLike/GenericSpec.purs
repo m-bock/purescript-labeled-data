@@ -58,8 +58,10 @@ instance Show Baz where
 
 type Opts = LowerFirst /\ (ArgsToRecord (Prefix "_"))
 
-prxOpts = Proxy :: Proxy
- Opts
+prxOpts =
+  Proxy
+    :: Proxy
+         Opts
 
 spec :: Spec Unit
 spec =

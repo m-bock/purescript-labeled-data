@@ -1,0 +1,5 @@
+{
+    "purescript.buildCommand": "just ide",
+    "purescript.addSpagoSources": false,
+    "purescript.packagePath": ".spago"
+}

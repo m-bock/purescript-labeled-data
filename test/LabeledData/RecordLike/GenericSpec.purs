@@ -21,8 +21,10 @@ derive instance Generic Bar _
 
 derive instance Generic Baz _
 
-prxOpts = Proxy :: Proxy
- (Prefix "_")
+prxOpts =
+  Proxy
+    :: Proxy
+         (Prefix "_")
 
 spec :: Spec Unit
 spec =

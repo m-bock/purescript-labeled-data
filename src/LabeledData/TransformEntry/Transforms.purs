@@ -1,6 +1,5 @@
 module LabeledData.TransformEntry.Transforms where
 
-
 import Prelude
 
 import Data.Symbol (class IsSymbol)
@@ -56,7 +55,6 @@ data NoTransform
 instance TransformEntry NoTransform sym sym a a where
   transformEntry _ _ _ = identity
   untransformEntry _ _ _ = identity
-
 
 --- Prefix
 

@@ -11,7 +11,6 @@
 
 module Test.GenReadme where
 
-
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested (type (/\))
@@ -33,11 +32,11 @@ import Type.Proxy (Proxy(..))
 
 data Foo
   -- Constructor    Arg 1                  Arg 2                  Arg 3
-  = MakeA           Int                    String                 (Maybe Int)
-  | MakeB           Boolean
+  = MakeA Int String (Maybe Int)
+  | MakeB Boolean
   | MakeC
-  | MakeD           { x :: Int, y :: Int }
-  | MakeE           Char                   { x :: Int, y :: Int }
+  | MakeD { x :: Int, y :: Int }
+  | MakeE Char { x :: Int, y :: Int }
 
 -- - On the vertical axis alternatives to
 --   construct a value of this type are listed. They're distinguished by the name
@@ -67,10 +66,10 @@ foo3 = MakeE 'a' { x: 3, y: 2 }
 f :: Foo -> String
 f foo = case foo of
   MakeA _ str _ -> str
-  MakeB _       -> "B"
-  MakeC         -> "C"
-  MakeD _       -> "D"
-  MakeE _ _     -> "E"
+  MakeB _ -> "B"
+  MakeC -> "C"
+  MakeD _ -> "D"
+  MakeE _ _ -> "E"
 
 -- ## Records and Variants. A better alternative?
 --
@@ -104,11 +103,11 @@ f foo = case foo of
 type Vec = { x :: Int, y :: Int }
 
 type FooV = Variant
-  ( makeA :: Record ( _1 :: Int     , _2 :: String , _3 :: Maybe Int )
-  , makeB :: Record ( _1 :: Boolean                                  )
-  , makeC :: Record (                                                )
-  , makeD :: Record ( _1 :: Vec                                      )
-  , makeE :: Record ( _1 :: Char    , _2 :: Vec                      )
+  ( makeA :: Record (_1 :: Int, _2 :: String, _3 :: Maybe Int)
+  , makeB :: Record (_1 :: Boolean)
+  , makeC :: Record ()
+  , makeD :: Record (_1 :: Vec)
+  , makeE :: Record (_1 :: Char, _2 :: Vec)
   )
 
 -- The fields for each case are defined as records. To highlight the analogy the
@@ -208,8 +207,8 @@ type FooV = Variant
 -- 
 -- This library provides a way to generically convert ADTs into Variants:
 
-data Bar 
-  = Bar1 Int    String
+data Bar
+  = Bar1 Int String
   | Bar2 String
 
 derive instance Generic Bar _
@@ -217,10 +216,11 @@ derive instance Generic Bar _
 bar :: Bar
 bar = Bar1 3 ""
 
-barV :: Variant
-  ( bar1 :: { _1 :: Int    , _2 :: String }
-  , bar2 :: { _1 :: String                }
-  )
+barV
+  :: Variant
+       ( bar1 :: { _1 :: Int, _2 :: String }
+       , bar2 :: { _1 :: String }
+       )
 barV = genericToVariant (Proxy :: _ (LowerFirst /\ ArgsToRecord (Prefix "_"))) bar
 
 -- ### Records
@@ -233,8 +233,8 @@ derive instance Generic Baz _
 baz :: Baz
 baz = Baz 3 ""
 
-bazV :: 
-  { _1 :: Int
-  , _2 :: String
-  }
+bazV
+  :: { _1 :: Int
+     , _2 :: String
+     }
 bazV = genericToRecord (Proxy :: _ (Prefix "_")) baz
