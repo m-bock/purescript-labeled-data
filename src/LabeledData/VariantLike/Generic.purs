@@ -16,7 +16,6 @@ import Data.Symbol (class IsSymbol)
 import Data.Variant (Variant)
 import Data.Variant as V
 import LabeledData.TransformEntry (class TransformEntry, untransformEntry, transformEntry)
-import Prim.Row (class Union)
 import Prim.Row as Row
 import Type.Proxy (Proxy(..))
 import Unsafe.Coerce (unsafeCoerce)
