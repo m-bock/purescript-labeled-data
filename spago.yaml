@@ -26,7 +26,6 @@ package:
       - aff: ">=7.1.0 <8.0.0"
       - effect: ">=4.0.0 <5.0.0"
       - spec: ">=7.3.0 <8.0.0"
-      - spec-discovery: ">=8.0.1 <9.0.0"
 workspace:
   buildOpts:
     censorLibraryWarnings: all
